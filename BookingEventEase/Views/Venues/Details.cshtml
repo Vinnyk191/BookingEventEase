@@ -1,42 +1,97 @@
 ﻿@model BookingEventEase.Models.Venue
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Venue Details";
 }
 
-<h1>Details</h1>
+<style>
+    .details-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #f9f9f9;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
 
-<div>
-    <h4>Venue</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.VenueName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.VenueName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Location)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Location)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Capacity)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Capacity)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ImageUrl)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ImageUrl)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.VenueId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #343a40;
+    }
+
+    .details-item {
+        margin-bottom: 15px;
+    }
+
+        .details-item label {
+            font-weight: bold;
+            display: block;
+            color: #555;
+        }
+
+        .details-item p {
+            font-size: 1.1rem;
+            margin: 5px 0 0;
+        }
+
+    .venue-image {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+        .venue-image img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+        }
+
+    .action-links {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+        .action-links a {
+            margin: 0 10px;
+            text-decoration: none;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+
+            .action-links a:hover {
+                background-color: #0056b3;
+            }
+</style>
+
+<div class="details-container">
+    <h2>Venue Details</h2>
+
+    <div class="venue-image">
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <img src="@Model.ImageUrl" alt="Venue Image" />
+        }
+    </div>
+
+    <div class="details-item">
+        <label>Name</label>
+        <p>@Model.VenueName</p>
+    </div>
+
+    <div class="details-item">
+        <label>Location</label>
+        <p>@Model.Location</p>
+    </div>
+
+    <div class="details-item">
+        <label>Capacity</label>
+        <p>@Model.Capacity</p>
+    </div>
+
+    <div class="action-links">
+        <a asp-action="Edit" asp-route-id="@Model.VenueId">Edit</a>
+        <a asp-action="Index">Back to List</a>
+    </div>
 </div>

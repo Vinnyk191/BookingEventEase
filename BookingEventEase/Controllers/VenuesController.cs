@@ -7,16 +7,23 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BookingEventEase.Data;
 using BookingEventEase.Models;
+using BookingEventEase.Helpers;
 
 namespace BookingEventEase.Controllers
 {
+    
+
+    //Update
+
     public class VenuesController : Controller
     {
         private readonly BookingEventEaseDbContext _context;
+        private readonly BlobHelper _blobHelper;
 
-        public VenuesController(BookingEventEaseDbContext context)
+        public VenuesController(BookingEventEaseDbContext context, BlobHelper blobHelper)
         {
             _context = context;
+            _blobHelper = blobHelper;
         }
 
         // GET: Venues
@@ -28,17 +35,10 @@ namespace BookingEventEase.Controllers
         // GET: Venues/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var venue = await _context.Venue
-                .FirstOrDefaultAsync(m => m.VenueId == id);
-            if (venue == null)
-            {
-                return NotFound();
-            }
+            var venue = await _context.Venue.FirstOrDefaultAsync(m => m.VenueId == id);
+            if (venue == null) return NotFound();
 
             return View(venue);
         }
@@ -50,86 +50,79 @@ namespace BookingEventEase.Controllers
         }
 
         // POST: Venues/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("VenueId,VenueName,Location,Capacity,ImageUrl")] Venue venue)
+        public async Task<IActionResult> Create([Bind("VenueName,Location,Capacity")] Venue venue, IFormFile imageFile)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
+                if (imageFile != null && imageFile.Length > 0)
+                {
+                    venue.ImageUrl = await _blobHelper.UploadImageAsync(imageFile);
+                }
+
                 _context.Add(venue);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
+            // If ModelState is invalid, re-show the form
             return View(venue);
         }
 
         // GET: Venues/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var venue = await _context.Venue.FindAsync(id);
-            if (venue == null)
-            {
-                return NotFound();
-            }
+            if (venue == null) return NotFound();
+
             return View(venue);
         }
 
         // POST: Venues/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("VenueId,VenueName,Location,Capacity,ImageUrl")] Venue venue)
+        public async Task<IActionResult> Edit(int id, [Bind("VenueId,VenueName,Location,Capacity,ImageUrl")] Venue venue, IFormFile imageFile)
         {
             if (id != venue.VenueId)
-            {
                 return NotFound();
-            }
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                    if (imageFile != null && imageFile.Length > 0)
+                    {
+                        venue.ImageUrl = await _blobHelper.UploadImageAsync(imageFile);
+                    }
+
                     _context.Update(venue);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!VenueExists(venue.VenueId))
-                    {
                         return NotFound();
-                    }
                     else
-                    {
                         throw;
-                    }
                 }
+
                 return RedirectToAction(nameof(Index));
             }
+
             return View(venue);
         }
 
         // GET: Venues/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var venue = await _context.Venue
                 .FirstOrDefaultAsync(m => m.VenueId == id);
-            if (venue == null)
-            {
-                return NotFound();
-            }
+            if (venue == null) return NotFound();
 
             return View(venue);
         }
@@ -140,13 +133,28 @@ namespace BookingEventEase.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var venue = await _context.Venue.FindAsync(id);
+            bool hasBookings = await _context.Bookings.AnyAsync(b => b.VenueId == id);
+
+            if (hasBookings)
+            {
+                TempData["ErrorMessage"] = "Cannot delete venue because it has existing bookings.";
+                return RedirectToAction(nameof(Index));
+            }
+
             if (venue != null)
             {
                 _context.Venue.Remove(venue);
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Venues/Search
+        public async Task<IActionResult> Search(string query)
+        {
+            var results = _context.Venue.Where(v => v.VenueName.Contains(query));
+            return View("Index", await results.ToListAsync()); // Reuse Index view
         }
 
         private bool VenueExists(int id)

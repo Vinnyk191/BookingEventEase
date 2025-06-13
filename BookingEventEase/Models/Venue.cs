@@ -15,5 +15,7 @@ namespace BookingEventEase.Models
         public int Capacity { get; set; }
         [Required]
         public string ImageUrl { get; set; } = "https://via.placeholder.com/150";
+        public bool IsAvailable { get; set; }
+        public ICollection<Event> Events { get; set; } //Added
     }
 }

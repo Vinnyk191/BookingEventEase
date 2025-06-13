@@ -36,14 +36,20 @@ namespace BookingEventEase.Migrations
                     b.Property<int>("EventID")
                         .HasColumnType("int");
 
+                    b.Property<int?>("EventID1")
+                        .HasColumnType("int");
+
                     b.Property<int>("VenueId")
                         .HasColumnType("int");
 
                     b.HasKey("BookingID");
 
-                    b.HasIndex("EventID");
+                    b.HasIndex("EventID1");
 
                     b.HasIndex("VenueId");
+
+                    b.HasIndex("EventID", "VenueId", "BookingDate")
+                        .IsUnique();
 
                     b.ToTable("Bookings");
                 });
@@ -67,14 +73,43 @@ namespace BookingEventEase.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("EventTypeId")
+                        .HasColumnType("int");
+
                     b.Property<int>("VenueId")
                         .HasColumnType("int");
 
                     b.HasKey("EventID");
 
+                    b.HasIndex("EventTypeId");
+
                     b.HasIndex("VenueId");
 
                     b.ToTable("Events");
+                });
+
+            modelBuilder.Entity("BookingEventEase.Models.EventType", b =>
+                {
+                    b.Property<int>("EventTypeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EventTypeId"));
+
+                    b.Property<string>("EventTypeName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("EventTypeId");
+
+                    b.ToTable("EventTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            EventTypeId = 1,
+                            EventTypeName = "General"
+                        });
                 });
 
             modelBuilder.Entity("BookingEventEase.Models.Venue", b =>
@@ -91,6 +126,9 @@ namespace BookingEventEase.Migrations
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Location")
                         .IsRequired()
@@ -113,6 +151,10 @@ namespace BookingEventEase.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BookingEventEase.Models.Event", null)
+                        .WithMany("Bookings")
+                        .HasForeignKey("EventID1");
+
                     b.HasOne("BookingEventEase.Models.Venue", "Venue")
                         .WithMany()
                         .HasForeignKey("VenueId")
@@ -126,13 +168,31 @@ namespace BookingEventEase.Migrations
 
             modelBuilder.Entity("BookingEventEase.Models.Event", b =>
                 {
-                    b.HasOne("BookingEventEase.Models.Venue", "Venue")
+                    b.HasOne("BookingEventEase.Models.EventType", "EventType")
                         .WithMany()
+                        .HasForeignKey("EventTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookingEventEase.Models.Venue", "Venue")
+                        .WithMany("Events")
                         .HasForeignKey("VenueId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("EventType");
+
                     b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("BookingEventEase.Models.Event", b =>
+                {
+                    b.Navigation("Bookings");
+                });
+
+            modelBuilder.Entity("BookingEventEase.Models.Venue", b =>
+                {
+                    b.Navigation("Events");
                 });
 #pragma warning restore 612, 618
         }
